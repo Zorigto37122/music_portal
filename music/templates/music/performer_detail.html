@@ -1,0 +1,102 @@
+{% extends 'music/base.html' %}
+
+{% block content %}
+<div class="glass-card" style="padding: 40px; margin-bottom: 40px; display: flex; gap: 40px; align-items: center;">
+    <div
+        style="width: 200px; height: 200px; border-radius: 50%; overflow: hidden; border: 4px solid var(--accent); flex-shrink: 0;">
+        {% if performer.photo %}
+        <img src="{{ performer.photo.url }}" alt="{{ performer.name }}"
+            style="width: 100%; height: 100%; object-fit: cover;">
+        {% else %}
+        <div
+            style="width: 100%; height: 100%; background: #333; display: flex; align-items: center; justify-content: center;">
+            <i class="fas fa-user" style="font-size: 4rem; opacity: 0.5;"></i>
+        </div>
+        {% endif %}
+    </div>
+    <div>
+        <h1 style="font-size: 3rem; margin-bottom: 10px;">{{ performer.name }}</h1>
+        <p style="font-size: 1.2rem; opacity: 0.8; margin-bottom: 20px;">{{ performer.get_type_display }}</p>
+        <p style="opacity: 0.7; max-width: 600px; margin-bottom: 20px;">{{ performer.bio }}</p>
+        <button class="btn" onclick="interact('favorite_performer', {{ performer.pk }})">
+            <i class="fas fa-heart"></i> Add to Favorites
+        </button>
+    </div>
+</div>
+
+<div style="display: grid; grid-template-columns: 2fr 1fr; gap: 40px;">
+    <section>
+        <h2 class="section-title">Albums</h2>
+        <div class="grid">
+            {% for album in albums %}
+            <div class="glass-card" style="padding: 15px;">
+                <div
+                    style="position: relative; margin-bottom: 15px; border-radius: 8px; overflow: hidden; aspect-ratio: 1/1;">
+                    {% if album.cover_image %}
+                    <img src="{{ album.cover_image.url }}" alt="{{ album.title }}"
+                        style="width: 100%; height: 100%; object-fit: cover;">
+                    {% else %}
+                    <div
+                        style="width: 100%; height: 100%; background: #333; display: flex; align-items: center; justify-content: center;">
+                        <i class="fas fa-music" style="font-size: 3rem; opacity: 0.5;"></i>
+                    </div>
+                    {% endif %}
+                    <a href="{% url 'music:album_detail' album.pk %}"
+                        style="position: absolute; inset: 0; background: rgba(0,0,0,0.4); opacity: 0; transition: opacity 0.3s; display: flex; align-items: center; justify-content: center; text-decoration: none;">
+                        <i class="fas fa-play-circle" style="font-size: 3rem; color: white;"></i>
+                    </a>
+                </div>
+                <h3 style="font-size: 1.1rem; margin-bottom: 5px;">{{ album.title }}</h3>
+                <p style="font-size: 0.9rem; opacity: 0.7;">{{ album.release_year }}</p>
+            </div>
+            {% empty %}
+            <p>No albums found.</p>
+            {% endfor %}
+        </div>
+    </section>
+
+    <section>
+        <h2 class="section-title">Top Tracks</h2>
+        <div class="glass-card" style="padding: 20px;">
+            {% for track in top_tracks %}
+            <div
+                style="display: flex; align-items: center; padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.1);">
+                <div style="width: 30px; text-align: center; opacity: 0.5; margin-right: 10px;">{{ forloop.counter }}
+                </div>
+                <div style="flex-grow: 1;">
+                    <h4 style="margin-bottom: 2px;">{{ track.title }}</h4>
+                    <p style="font-size: 0.8rem; opacity: 0.6;">{{ track.play_count }} plays</p>
+                </div>
+                <button
+                    onclick="playTrack('{{ track.audio_file.url }}', '{{ track.title }}', '{{ performer.name }}', {{ track.pk }})"
+                    style="background: none; border: none; color: var(--accent); cursor: pointer; margin-right: 10px;">
+                    <i class="fas fa-play"></i>
+                </button>
+            </div>
+            {% empty %}
+            <p>No tracks found.</p>
+            {% endfor %}
+        </div>
+    </section>
+</div>
+
+<script>
+    function interact(type, id) {
+        fetch(`/interact/${type}/${id}/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': '{{ csrf_token }}'
+            }
+        }).then(response => response.json())
+            .then(data => {
+                if (data.status === 'added') {
+                    alert('Added to favorites!');
+                } else if (data.status === 'removed') {
+                    alert('Removed from favorites.');
+                } else {
+                    alert('Error: ' + (data.error || 'Unknown error'));
+                }
+            });
+    }
+</script>
+{% endblock %}

@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Music Portal{% endblock %}</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #6366f1;
+            --secondary: #a855f7;
+            --accent: #ec4899;
+            --dark: #0f172a;
+            --light: #f8fafc;
+            --glass: rgba(255, 255, 255, 0.1);
+            --glass-border: rgba(255, 255, 255, 0.2);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Outfit', sans-serif;
+            background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%);
+            color: var(--light);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* Glassmorphism Utilities */
+        .glass {
+            background: var(--glass);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid var(--glass-border);
+            border-radius: 16px;
+        }
+
+        .glass-card {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .glass-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        /* Layout */
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        header {
+            padding: 20px 0;
+            margin-bottom: 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-size: 24px;
+            font-weight: 700;
+            background: linear-gradient(to right, var(--primary), var(--accent));
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-decoration: none;
+        }
+
+        nav a {
+            color: var(--light);
+            text-decoration: none;
+            margin-left: 20px;
+            font-weight: 600;
+            transition: color 0.3s;
+        }
+
+        nav a:hover {
+            color: var(--accent);
+        }
+
+        /* Components */
+        .btn {
+            display: inline-block;
+            padding: 10px 24px;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+            text-decoration: none;
+            border-radius: 30px;
+            font-weight: 600;
+            border: none;
+            cursor: pointer;
+            transition: opacity 0.3s;
+        }
+
+        .btn:hover {
+            opacity: 0.9;
+        }
+
+        .section-title {
+            font-size: 2rem;
+            margin-bottom: 20px;
+            font-weight: 700;
+        }
+
+        /* Grid */
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 24px;
+        }
+
+        /* Player Bar */
+        .player-bar {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 90%;
+            max-width: 800px;
+            padding: 15px 30px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            z-index: 1000;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+    </style>
+    {% block extra_css %}{% endblock %}
+</head>
+
+<body>
+    <div class="container">
+        <header>
+            <a href="{% url 'music:home' %}" class="logo">MusicPortal</a>
+            <nav>
+                <a href="{% url 'music:home' %}">Home</a>
+                {% if user.is_authenticated %}
+                <a href="#">My Library</a>
+                <a href="#">Profile</a>
+                {% else %}
+                <a href="/admin/">Login</a>
+                {% endif %}
+            </nav>
+        </header>
+
+        {% block content %}{% endblock %}
+    </div>
+
+    <!-- Persistent Player -->
+    <div id="player-bar" class="glass player-bar hidden">
+        <div class="track-info">
+            <h4 id="player-title" style="margin-bottom: 4px;">Title</h4>
+            <p id="player-artist" style="font-size: 0.8rem; opacity: 0.7;">Artist</p>
+        </div>
+        <audio id="audio-player" controls style="width: 60%;"></audio>
+        <button id="close-player" style="background:none; border:none; color:white; cursor:pointer;">
+            <i class="fas fa-times"></i>
+        </button>
+    </div>
+
+    <script>
+        const playerBar = document.getElementById('player-bar');
+        const audioPlayer = document.getElementById('audio-player');
+        const playerTitle = document.getElementById('player-title');
+        const playerArtist = document.getElementById('player-artist');
+        const closePlayer = document.getElementById('close-player');
+
+        function playTrack(url, title, artist, id) {
+            playerBar.classList.remove('hidden');
+            playerTitle.textContent = title;
+            playerArtist.textContent = artist;
+            audioPlayer.src = url;
+            audioPlayer.play();
+
+            // Record play
+            fetch(`/play/${id}/`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': '{{ csrf_token }}'
+                }
+            });
+        }
+
+        closePlayer.addEventListener('click', () => {
+            audioPlayer.pause();
+            playerBar.classList.add('hidden');
+        });
+    </script>
+    {% block extra_js %}{% endblock %}
+</body>
+
+</html>
