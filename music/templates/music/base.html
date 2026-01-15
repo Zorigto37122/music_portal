@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}Music Portal{% endblock %}</title>
+    <title>{% block title %}Музыкальный Портал{% endblock %}</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
@@ -150,14 +150,16 @@
 <body>
     <div class="container">
         <header>
-            <a href="{% url 'music:home' %}" class="logo">MusicPortal</a>
+            <a href="{% url 'music:home' %}" class="logo">Музыкальный портал</a>
             <nav>
-                <a href="{% url 'music:home' %}">Home</a>
+                <a href="{% url 'music:home' %}">Главная</a>
                 {% if user.is_authenticated %}
-                <a href="#">My Library</a>
-                <a href="#">Profile</a>
+                <a href="{% url 'music:my_library' %}">Моя библиотека</a>
+                <a href="{% url 'music:profile' %}">Профиль</a>
+                <a href="{% url 'music:logout' %}">Выход</a>
                 {% else %}
-                <a href="/admin/">Login</a>
+                <a href="{% url 'music:login' %}">Вход</a>
+                <a href="{% url 'music:register' %}" class="btn" style="padding: 8px 20px; font-size: 0.9rem;">Регистрация</a>
                 {% endif %}
             </nav>
         </header>
@@ -168,8 +170,8 @@
     <!-- Persistent Player -->
     <div id="player-bar" class="glass player-bar hidden">
         <div class="track-info">
-            <h4 id="player-title" style="margin-bottom: 4px;">Title</h4>
-            <p id="player-artist" style="font-size: 0.8rem; opacity: 0.7;">Artist</p>
+            <h4 id="player-title" style="margin-bottom: 4px;">Название</h4>
+            <p id="player-artist" style="font-size: 0.8rem; opacity: 0.7;">Исполнитель</p>
         </div>
         <audio id="audio-player" controls style="width: 60%;"></audio>
         <button id="close-player" style="background:none; border:none; color:white; cursor:pointer;">

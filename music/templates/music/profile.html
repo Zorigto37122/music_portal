@@ -1,0 +1,112 @@
+{% extends 'music/base.html' %}
+
+{% block content %}
+<div class="glass-card" style="padding: 40px; margin-bottom: 40px;">
+    <div style="display: flex; align-items: center; gap: 30px; margin-bottom: 30px;">
+        <div style="width: 120px; height: 120px; border-radius: 50%; background: linear-gradient(135deg, var(--primary), var(--accent)); display: flex; align-items: center; justify-content: center; font-size: 3rem;">
+            <i class="fas fa-user"></i>
+        </div>
+        <div>
+            <h1 style="font-size: 2.5rem; margin-bottom: 10px;">{{ user.username }}</h1>
+            <p style="opacity: 0.7; font-size: 1.1rem;">{{ user.email|default:"Email не указан" }}</p>
+            <p style="opacity: 0.6; margin-top: 5px;">Дата регистрации: {{ user.date_joined|date:"d.m.Y" }}</p>
+        </div>
+    </div>
+</div>
+
+<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px; margin-bottom: 40px;">
+    <div class="glass-card" style="padding: 30px;">
+        <h2 class="section-title" style="font-size: 1.5rem; margin-bottom: 20px;">Избранные исполнители</h2>
+        {% if favorite_performers %}
+        <div class="grid" style="grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 15px;">
+            {% for performer in favorite_performers %}
+            <div style="text-align: center;">
+                <a href="{% url 'music:performer_detail' performer.pk %}" style="text-decoration: none; color: white;">
+                    <div style="width: 80px; height: 80px; border-radius: 50%; overflow: hidden; margin: 0 auto 10px; border: 2px solid var(--accent);">
+                        {% if performer.photo %}
+                        <img src="{{ performer.photo.url }}" alt="{{ performer.name }}" style="width: 100%; height: 100%; object-fit: cover;">
+                        {% else %}
+                        <div style="width: 100%; height: 100%; background: #333; display: flex; align-items: center; justify-content: center;">
+                            <i class="fas fa-user" style="opacity: 0.5;"></i>
+                        </div>
+                        {% endif %}
+                    </div>
+                    <p style="font-size: 0.9rem; font-weight: 600;">{{ performer.name }}</p>
+                </a>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <p style="opacity: 0.7; text-align: center; padding: 20px;">Нет избранных исполнителей</p>
+        {% endif %}
+    </div>
+
+    <div class="glass-card" style="padding: 30px;">
+        <h2 class="section-title" style="font-size: 1.5rem; margin-bottom: 20px;">Понравившиеся композиции</h2>
+        {% if liked_compositions %}
+        <div style="max-height: 400px; overflow-y: auto;">
+            {% for composition in liked_compositions|slice:":10" %}
+            <div style="display: flex; align-items: center; padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.1);">
+                <div style="flex-grow: 1;">
+                    <h4 style="margin-bottom: 2px;">{{ composition.title }}</h4>
+                    <p style="font-size: 0.8rem; opacity: 0.6;">{{ composition.album.performer.name }} • {{ composition.album.title }}</p>
+                </div>
+                <button onclick="playTrack('{{ composition.audio_file.url }}', '{{ composition.title }}', '{{ composition.album.performer.name }}', {{ composition.pk }})"
+                    style="background: none; border: none; color: var(--accent); cursor: pointer; margin-left: 10px; font-size: 1.2rem;">
+                    <i class="fas fa-play"></i>
+                </button>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <p style="opacity: 0.7; text-align: center; padding: 20px;">Нет понравившихся композиций</p>
+        {% endif %}
+    </div>
+</div>
+
+<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px;">
+    <div class="glass-card" style="padding: 30px;">
+        <h2 class="section-title" style="font-size: 1.5rem; margin-bottom: 20px;">История прослушиваний</h2>
+        {% if listen_history %}
+        <div style="max-height: 400px; overflow-y: auto;">
+            {% for interaction in listen_history %}
+            <div style="display: flex; align-items: center; padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.1);">
+                <div style="flex-grow: 1;">
+                    <h4 style="margin-bottom: 2px;">{{ interaction.composition.title }}</h4>
+                    <p style="font-size: 0.8rem; opacity: 0.6;">{{ interaction.composition.album.performer.name }} • {{ interaction.timestamp|date:"d.m.Y H:i" }}</p>
+                </div>
+                <button onclick="playTrack('{{ interaction.composition.audio_file.url }}', '{{ interaction.composition.title }}', '{{ interaction.composition.album.performer.name }}', {{ interaction.composition.pk }})"
+                    style="background: none; border: none; color: var(--accent); cursor: pointer; margin-left: 10px; font-size: 1.2rem;">
+                    <i class="fas fa-play"></i>
+                </button>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <p style="opacity: 0.7; text-align: center; padding: 20px;">История прослушиваний пуста</p>
+        {% endif %}
+    </div>
+
+    <div class="glass-card" style="padding: 30px;">
+        <h2 class="section-title" style="font-size: 1.5rem; margin-bottom: 20px;">История загрузок</h2>
+        {% if download_history %}
+        <div style="max-height: 400px; overflow-y: auto;">
+            {% for interaction in download_history %}
+            <div style="display: flex; align-items: center; padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.1);">
+                <div style="flex-grow: 1;">
+                    <h4 style="margin-bottom: 2px;">{{ interaction.composition.title }}</h4>
+                    <p style="font-size: 0.8rem; opacity: 0.6;">{{ interaction.composition.album.performer.name }} • {{ interaction.timestamp|date:"d.m.Y H:i" }}</p>
+                </div>
+                <a href="{% url 'music:download_composition' interaction.composition.pk %}"
+                    style="color: var(--accent); text-decoration: none; margin-left: 10px; font-size: 1.2rem;">
+                    <i class="fas fa-download"></i>
+                </a>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <p style="opacity: 0.7; text-align: center; padding: 20px;">История загрузок пуста</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

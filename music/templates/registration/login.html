@@ -1,0 +1,27 @@
+{% extends 'music/base.html' %}
+
+{% block content %}
+<div style="max-width: 400px; margin: 60px auto;">
+    <div class="glass-card" style="padding: 40px;">
+        <h2 style="text-align: center; margin-bottom: 30px; font-size: 2rem;">Вход</h2>
+        <form method="post">
+            {% csrf_token %}
+            {% for field in form %}
+            <div style="margin-bottom: 20px;">
+                <label style="display: block; margin-bottom: 8px; font-weight: 600;">{{ field.label }}</label>
+                <input type="{{ field.field.widget.input_type }}" name="{{ field.name }}" id="{{ field.id_for_label }}"
+                    style="width: 100%; padding: 12px 15px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.2); background: rgba(255,255,255,0.05); color: white; outline: none;">
+                {% if field.errors %}
+                <div style="color: #ef4444; font-size: 0.9rem; margin-top: 5px;">{{ field.errors.0 }}</div>
+                {% endif %}
+            </div>
+            {% endfor %}
+            <button type="submit" class="btn" style="width: 100%; margin-top: 10px;">Войти</button>
+        </form>
+        <p style="text-align: center; margin-top: 20px; opacity: 0.7;">
+            Нет аккаунта? <a href="{% url 'music:register' %}"
+                style="color: var(--accent); text-decoration: none;">Зарегистрироваться</a>
+        </p>
+    </div>
+</div>
+{% endblock %}

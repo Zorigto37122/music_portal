@@ -18,15 +18,15 @@
         <h1 style="font-size: 3rem; margin-bottom: 10px;">{{ performer.name }}</h1>
         <p style="font-size: 1.2rem; opacity: 0.8; margin-bottom: 20px;">{{ performer.get_type_display }}</p>
         <p style="opacity: 0.7; max-width: 600px; margin-bottom: 20px;">{{ performer.bio }}</p>
-        <button class="btn" onclick="interact('favorite_performer', {{ performer.pk }})">
-            <i class="fas fa-heart"></i> Add to Favorites
+        <button class="btn" onclick="interact('favorite_performer', {{ performer.pk }}, this)">
+            <i class="fas fa-heart"></i> В Избранное
         </button>
     </div>
 </div>
 
 <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 40px;">
     <section>
-        <h2 class="section-title">Albums</h2>
+        <h2 class="section-title">Альбомы</h2>
         <div class="grid">
             {% for album in albums %}
             <div class="glass-card" style="padding: 15px;">
@@ -50,13 +50,13 @@
                 <p style="font-size: 0.9rem; opacity: 0.7;">{{ album.release_year }}</p>
             </div>
             {% empty %}
-            <p>No albums found.</p>
+            <p>Альбомы не найдены.</p>
             {% endfor %}
         </div>
     </section>
 
     <section>
-        <h2 class="section-title">Top Tracks</h2>
+        <h2 class="section-title">Лучшие Треки</h2>
         <div class="glass-card" style="padding: 20px;">
             {% for track in top_tracks %}
             <div
@@ -65,7 +65,7 @@
                 </div>
                 <div style="flex-grow: 1;">
                     <h4 style="margin-bottom: 2px;">{{ track.title }}</h4>
-                    <p style="font-size: 0.8rem; opacity: 0.6;">{{ track.play_count }} plays</p>
+                    <p style="font-size: 0.8rem; opacity: 0.6;">{{ track.play_count }} прослушиваний</p>
                 </div>
                 <button
                     onclick="playTrack('{{ track.audio_file.url }}', '{{ track.title }}', '{{ performer.name }}', {{ track.pk }})"
@@ -74,14 +74,14 @@
                 </button>
             </div>
             {% empty %}
-            <p>No tracks found.</p>
+            <p>Треки не найдены.</p>
             {% endfor %}
         </div>
     </section>
 </div>
 
 <script>
-    function interact(type, id) {
+    function interact(type, id, btn) {
         fetch(`/interact/${type}/${id}/`, {
             method: 'POST',
             headers: {
@@ -90,11 +90,17 @@
         }).then(response => response.json())
             .then(data => {
                 if (data.status === 'added') {
-                    alert('Added to favorites!');
+                    if (btn) {
+                        btn.innerHTML = '<i class="fas fa-heart"></i> В избранном';
+                        btn.style.background = 'linear-gradient(135deg, var(--accent), var(--secondary))';
+                    }
                 } else if (data.status === 'removed') {
-                    alert('Removed from favorites.');
+                    if (btn) {
+                        btn.innerHTML = '<i class="fas fa-heart"></i> В Избранное';
+                        btn.style.background = 'linear-gradient(135deg, var(--primary), var(--secondary))';
+                    }
                 } else {
-                    alert('Error: ' + (data.error || 'Unknown error'));
+                    alert('Ошибка: ' + (data.error || 'Неизвестная ошибка'));
                 }
             });
     }
